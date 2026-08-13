@@ -49,7 +49,7 @@ Adres skryptu leży w `localStorage` pod osobnym kluczem, nigdy w pliku HTML. Dz
 - Każdy tekst od użytkownika przepuszczony przez `esc()` przed wstawieniem do `innerHTML`.
 - Kolory zawsze przez zmienne CSS. Warianty `--c-*` do wypełnień, `--t-*` do tekstu — na jasnym tle żółty tekst jest nieczytelny, dlatego istnieją oba.
 - `inputmode="decimal"` na polach kwot, minimum 16 px czcionki na inputach (inaczej iOS zoomuje przy focusie).
-- Motyw: `data-theme` na `<html>`, jasny domyślnie, wybór per urządzenie.
+- Motyw: `data-theme` na `<html>`, ciemny domyślnie, wybór per urządzenie.
 
 ## Priorytety przy zmianach
 

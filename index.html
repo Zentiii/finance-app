@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#F4F5F7">
+<meta name="theme-color" content="#0A0B0D">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="robots" content="noindex, nofollow">
@@ -36,6 +36,10 @@ html,body{background:var(--ink)}
 body{font-family:'Manrope',system-ui,-apple-system,sans-serif;color:var(--text);
   min-height:100vh;-webkit-font-smoothing:antialiased}
 .mono{font-variant-numeric:tabular-nums}
+.money{transition:filter .15s}
+:root[data-hide="1"] .money{filter:blur(7px);user-select:none;-webkit-user-select:none}
+.hidebtn{background:var(--panel3);border:0;border-radius:999px;width:28px;height:28px;flex:none;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
 .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim2);font-weight:700}
 .dot{width:9px;height:9px;border-radius:999px;flex:none}
 .shell{display:flex;min-height:100vh}
@@ -155,7 +159,7 @@ ol.steps b{color:var(--text);font-weight:700}
 
 <script>
 /* ================= dane ================= */
-const KEY='budzet:v3', SYNCKEY='budzet:sync', THEMEKEY='budzet:theme';
+const KEY='budzet:v3', SYNCKEY='budzet:sync', THEMEKEY='budzet:theme', HIDEKEY='budzet:hide';
 const ACCOUNTS=[{id:'glowne',label:'Główne'},{id:'oszcz',label:'Oszczędnościowe'},{id:'kasa',label:'Gotówka'}];
 const ENVELOPES=[
  {id:'rodzice',label:'Rodzice',hint:'tylko jedzenie',color:'var(--c-rodzice)'},
@@ -169,8 +173,8 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 const accLabel=id=>(ACCOUNTS.find(a=>a.id===id)||{}).label||id;
 const envLabel=id=>(ENVELOPES.find(e=>e.id===id)||{}).label||id;
 const envColor=id=>(ENVELOPES.find(e=>e.id===id)||{}).color||'var(--dim)';
-const zl=n=>new Intl.NumberFormat('pl-PL',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n||0)+' zł';
-const zl0=n=>new Intl.NumberFormat('pl-PL',{maximumFractionDigits:0}).format(n||0)+' zł';
+const zl=n=>`<span class="money">${new Intl.NumberFormat('pl-PL',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n||0)} zł</span>`;
+const zl0=n=>`<span class="money">${new Intl.NumberFormat('pl-PL',{maximumFractionDigits:0}).format(n||0)} zł</span>`;
 const num=v=>Number(String(v==null?'':v).replace(/\s/g,'').replace(',','.'));
 const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const monthOf=iso=>String(iso).slice(0,7);
@@ -200,7 +204,9 @@ const ICONS={
   home:'<path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/>',
   list:'<path d="M4 7h16M4 12h16M4 17h10"/>',
   gear:'<circle cx="12" cy="12" r="3.2"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4" stroke-linecap="round"/>',
-  plus:'<path d="M12 5v14M5 12h14"/>'
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  eye:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
+  eyeoff:'<path d="M3 3l18 18M10.6 10.6a3 3 0 0 0 4.2 4.2M9.9 4.2A10.4 10.4 0 0 1 12 4c6.4 0 10 8 10 8a17.5 17.5 0 0 1-3.1 4.2M6.1 6.2C3.4 8 2 12 2 12s1.4 2.9 4.1 4.9"/>'
 };
 const CAT_ICON={Jedzenie:'food',Subskrypcje:'sub',Barber:'barber',Transport:'transport','Sprzęt':'sprzet',
   Rozrywka:'rozrywka',Zlecenie:'briefcase','Od rodziców':'heart'};
@@ -299,8 +305,11 @@ function render(){
         <div class="totalrow">
           <div><div class="eyebrow">Wszystkie pieniądze</div><div class="total mono">${zl(c.total)}</div></div>
           <div style="text-align:right">
-            <div class="sync" data-st="${ui.syncState}" style="justify-content:flex-end;margin-bottom:4px"><i></i><span>${
-              ({off:'lokalnie',busy:'zapisuję',ok:'w chmurze',err:'błąd sync'})[ui.syncState]}</span></div>
+            <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:4px">
+              <button class="hidebtn" data-act="hide" aria-label="${hidden()?'Pokaż kwoty':'Ukryj kwoty'}">${svgIcon(hidden()?'eyeoff':'eye','var(--dim)',16)}</button>
+              <div class="sync" data-st="${ui.syncState}"><i></i><span>${
+                ({off:'lokalnie',busy:'zapisuję',ok:'w chmurze',err:'błąd sync'})[ui.syncState]}</span></div>
+            </div>
             <div class="eyebrow">Twoje wolne</div>
             <div class="total mono" style="color:var(--t-moje);font-size:20px">${zl(c.env.moje)}</div>
           </div>
@@ -320,7 +329,7 @@ function render(){
 function stackedBar(parts,psum,H){
   const segs = psum<=0 ? '' : parts.filter(p=>p.v>0).map(p=>{
     const pct=p.v/psum*100;
-    return `<div class="stackseg" style="width:${pct}%;background:${p.e.color}">${pct>=18?`<span>${zl0(p.v)}</span>`:''}</div>`;
+    return `<div class="stackseg" style="width:${pct}%;background:${p.e.color}">${pct>=18?zl0(p.v):''}</div>`;
   }).join('');
   return `<div class="stackbar" style="height:${H}px" role="img" aria-label="Podział pieniędzy na koperty">${segs}</div>`;
 }
@@ -718,6 +727,7 @@ function act(a){
       document.getElementById('pinerr').innerHTML='<div class="warn" style="text-align:left">Zły PIN. Spróbuj jeszcze raz.</div>';
       if(el){el.value='';el.focus()} return}
     case 'theme': setTheme(v); return render();
+    case 'hide': setHidden(!hidden()); return render();
     case 'setup': ui.set.showSetup=!ui.set.showSetup; return render();
     case 'syncsave': {const u=String(ui.set.syncUrl||'').trim();
       if(u&&!/^https:\/\/script\.google\.com\/.+\/exec$/.test(u)){toast('Adres musi kończyć się na /exec');return}
@@ -780,7 +790,7 @@ function importJson(){
 }
 
 /* ================= motyw ================= */
-function theme(){try{return localStorage.getItem(THEMEKEY)||'light'}catch(e){return 'light'}}
+function theme(){try{return localStorage.getItem(THEMEKEY)||'dark'}catch(e){return 'dark'}}
 function setTheme(t){
   try{localStorage.setItem(THEMEKEY,t)}catch(e){}
   document.documentElement.dataset.theme=t;
@@ -788,8 +798,16 @@ function setTheme(t){
   if(m)m.setAttribute('content',t==='dark'?'#0A0B0D':'#F4F5F7');
 }
 
+/* ================= prywatność ================= */
+function hidden(){try{return localStorage.getItem(HIDEKEY)==='1'}catch(e){return false}}
+function setHidden(v){
+  try{localStorage.setItem(HIDEKEY,v?'1':'0')}catch(e){}
+  document.documentElement.dataset.hide=v?'1':'0';
+}
+
 /* ================= start ================= */
 setTheme(theme());
+setHidden(hidden());
 S=loadLocal();
 ui.unlocked=!S.pin;
 ui.syncState=syncUrl()?'busy':'off';
